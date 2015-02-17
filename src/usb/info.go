@@ -146,6 +146,19 @@ func countDescriptors(d []byte, kind uint8) int {
 	return count
 }
 
+func skipNonmatching(d []byte, kind uint8) []byte {
+	if len(d) < 2 {
+		return d
+	}
+	if len(d) < int(d[0]) {
+		return d
+	}
+	if d[1] != kind {
+		return d[d[0]:]
+	}
+	return d
+}
+
 func parseConfig(d []byte, ci *ConfigInfo) []byte {
 	if ci.TotalLength < uint16(ci.Length) {
 		return nil
@@ -158,6 +171,7 @@ func parseConfig(d []byte, ci *ConfigInfo) []byte {
 
 	ci.Interface = make([]InterfaceInfo, count)
 	for i := 0; i < count; i++ {
+		d = skipNonmatching(d, DT_INTERFACE)
 		d = parseInterfaceDesc(d, &ci.Interface[i].InterfaceDescriptor)
 		if d == nil {
 			return nil
@@ -165,6 +179,7 @@ func parseConfig(d []byte, ci *ConfigInfo) []byte {
 		ii := &ci.Interface[i]
 		ii.Endpoint = make([]EndpointDescriptor, ii.NumEndpoints)
 		for j := 0; j < int(ii.NumEndpoints); j++ {
+			d = skipNonmatching(d, DT_ENDPOINT)
 			d = parseEndpointDesc(d, &ii.Endpoint[j])
 			if d == nil {
 				return nil
@@ -182,6 +197,7 @@ func parseDescriptors(d []byte) *DeviceInfo {
 	}
 	di.Config = make([]ConfigInfo, di.NumConfigurations)
 	for i := 0; i < int(di.NumConfigurations); i++ {
+		d = skipNonmatching(d, DT_CONFIG)
 		d = parseConfigDesc(d, &di.Config[i].ConfigDescriptor)
 		if d == nil {
 			return nil
