@@ -107,8 +107,28 @@ func (u *Device) reaper() {
 	}
 }
 
-func Open(path string) (*Device, error) {
-	fd, e := syscall.Open(path, os.O_RDWR|syscall.O_CLOEXEC, 0666)
+func OpenVidPid(vid uint16, pid uint16) (*Device, error) {
+	for di := DeviceInfoList(); di != nil; di = di.Next {
+		if (vid != di.VendorID) || (pid != di.ProductID) {
+			continue
+		}
+		return Open(di)
+	}
+	return nil, syscall.ENODEV
+}
+
+func OpenBusDev(bus int, dev int) (*Device, error) {
+	for di := DeviceInfoList(); di != nil; di = di.Next {
+		if (bus != di.BusNum) || (dev != di.DevNum) {
+			continue
+		}
+		return Open(di)
+	}
+	return nil, syscall.ENODEV
+}
+
+func Open(di *DeviceInfo) (*Device, error) {
+	fd, e := syscall.Open(di.devpath, os.O_RDWR|syscall.O_CLOEXEC, 0666)
 	if e != nil {
 		return nil, e
 	}
