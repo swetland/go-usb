@@ -93,3 +93,14 @@ type usbdevfs_urb struct {
 	signr             uint32
 	usercontext       uintptr
 }
+
+type usbdevfs_setifc struct {
+	num uint32
+	alt uint32
+}
+
+type usbdevfs_ioctl struct {
+	ifc  uint32
+	code uint32
+	data uintptr
+}

@@ -154,6 +154,35 @@ func (u *Device) ClaimInterface(n uint32) error {
 	return e
 }
 
+func (u *Device) ReleaseInterface(n uint32) error {
+	_, e := ioctl(u.fd, USBDEVFS_RELEASEINTERFACE, uintptr(unsafe.Pointer(&n)))
+	return e
+}
+
+func (u *Device) ClearHalt(endpoint uint8) error {
+	var n uint32 = uint32(endpoint)
+	_, e := ioctl(u.fd, USBDEVFS_CLEAR_HALT, uintptr(unsafe.Pointer(&n)))
+	return e
+}
+
+func (u *Device) SetConfiguration(num uint8) error {
+	var n uint32 = uint32(num)
+	_, e := ioctl(u.fd, USBDEVFS_SETCONFIGURATION, uintptr(unsafe.Pointer(&n)))
+	return e
+}
+
+func (u *Device) SetInterface(num uint8, alt uint8) error {
+	x := usbdevfs_setifc{uint32(num), uint32(alt)}
+	_, e := ioctl(u.fd, USBDEVFS_SETINTERFACE, uintptr(unsafe.Pointer(&x)))
+	return e
+}
+
+func (u *Device) DisconnectDriver(ifc uint8) error {
+	x := usbdevfs_ioctl{uint32(ifc), USBDEVFS_DISCONNECT, 0}
+	_, e := ioctl(u.fd, USBDEVFS_IOCTL, uintptr(unsafe.Pointer(&x)))
+	return e
+}
+
 func (u *Device) ControlTransfer(
 	reqtype uint8, request uint8, value uint16, index uint16,
 	length uint16, timeout uint32, data []byte) (int, error) {
